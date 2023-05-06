@@ -19,6 +19,7 @@ package com.fluffyluffs.httpretriever4j;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -206,7 +207,12 @@ public class HttpRetrieverCriteria {
     }
 
     public HttpRetrieverCriteriaBuilder setHeader(Header header) {
-      headers.add(header);
+      setHeaders(List.of(header));
+      return this;
+    }
+
+    public HttpRetrieverCriteriaBuilder setHeaders(Collection<Header> headers) {
+      this.headers.addAll(headers);
       return this;
     }
 
@@ -275,7 +281,7 @@ public class HttpRetrieverCriteria {
   public enum ContentType {
     JSON("application/json;charset=UTF-8"),
     PNG("image/png"),
-    
+
     TEXT("text/html; charset=UTF-8"),
     XML("application/xml; charset=UTF-8");
 

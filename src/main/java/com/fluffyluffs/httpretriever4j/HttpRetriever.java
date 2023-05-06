@@ -17,6 +17,7 @@
 package com.fluffyluffs.httpretriever4j;
 
 import com.fluffyluffs.httpretriever4j.impl.HttpRetrieverImpl;
+import com.fluffyluffs.httpretriever4j.impl.error.HttpRetrieverImplError;
 import java.io.InputStream;
 import java.util.function.Function;
 
@@ -38,9 +39,9 @@ public class HttpRetriever {
    *
    * @return InputStream
    */
-  public InputStream retrieve() {
+  public InputStream retrieve() throws HttpRetrieverImplError {
 
-    return new HttpRetrieverImpl(httpRetrieverCriteria).retrieve();
+    return new HttpRetrieverImpl(httpRetrieverCriteria).retrieveHttpRetrieverResponse().getIn();
   }
 
   /**
@@ -50,8 +51,16 @@ public class HttpRetriever {
    * @param responseFunction response function
    * @return T
    */
-  public <T> T retrieve(Function<InputStream, T> responseFunction) {
+  public <T> T retrieve(Function<InputStream, T> responseFunction) throws HttpRetrieverImplError {
 
-    return responseFunction.apply(new HttpRetrieverImpl(httpRetrieverCriteria).retrieve());
+    return responseFunction.apply(
+        new HttpRetrieverImpl(httpRetrieverCriteria).retrieveHttpRetrieverResponse().getIn());
+  }
+
+  public int status() throws HttpRetrieverImplError {
+
+    return new HttpRetrieverImpl(httpRetrieverCriteria)
+        .retrieveHttpRetrieverResponse()
+        .getResponseCode();
   }
 }

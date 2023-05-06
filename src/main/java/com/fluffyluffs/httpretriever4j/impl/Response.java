@@ -28,6 +28,7 @@ public enum Response {
   HTTP_CREATED(201, true),
   HTTP_NO_CONTENT(204, true),
   HTTP_UNAUTHORIZED(401, false),
+  HTTP_FORBIDDEN(403, false),
   HTTP_NOT_FOUND(404, false),
   HTTP_INTERNAL_ERROR(500, false);
 

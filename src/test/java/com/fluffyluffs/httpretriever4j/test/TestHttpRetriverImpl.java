@@ -15,9 +15,18 @@
  */
 package com.fluffyluffs.httpretriever4j.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
+
 import com.fluffyluffs.httpretriever4j.HttpRetriever;
 import com.fluffyluffs.httpretriever4j.HttpRetrieverCriteria;
 import com.fluffyluffs.httpretriever4j.Utils;
+import com.fluffyluffs.httpretriever4j.impl.error.HttpRetrieverImplError;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -25,18 +34,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.UnknownHostException;
 import org.junit.Assert;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
-import static org.mockito.ArgumentMatchers.anyString;
 import org.mockito.Mockito;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.PowerMockRunnerDelegate;
@@ -193,7 +194,7 @@ public class TestHttpRetriverImpl {
     new HttpRetriever(mockHttpRetrieverCriteria).retrieve();
   }
 
-  @Test(expected = RuntimeException.class)
+  @Test
   public void test_url_ioexception() throws IOException, Exception {
 
     URL mockURL = mock(URL.class);
@@ -209,12 +210,15 @@ public class TestHttpRetriverImpl {
     when(mockHttpRetrieverCriteria.gethTTPMethod())
         .thenReturn(HttpRetrieverCriteria.HTTPMethod.GET);
 
-    new HttpRetriever(mockHttpRetrieverCriteria).retrieve();
+    HttpRetrieverImplError httpRetrieverImplError =
+        Assert.assertThrows(
+            HttpRetrieverImplError.class,
+            () -> new HttpRetriever(mockHttpRetrieverCriteria).retrieve());
 
-    Assert.fail("Should have thrown a runtime exception.");
+    assertEquals("Couldn't open that connection!", httpRetrieverImplError.getLocalizedMessage());
   }
 
-  @Test(expected = RuntimeException.class)
+  @Test
   public void test_url_unreachable() throws IOException, Exception {
 
     URL mockURL = mock(URL.class);
@@ -231,8 +235,11 @@ public class TestHttpRetriverImpl {
     when(mockHttpRetrieverCriteria.gethTTPMethod())
         .thenReturn(HttpRetrieverCriteria.HTTPMethod.GET);
 
-    new HttpRetriever(mockHttpRetrieverCriteria).retrieve();
+    HttpRetrieverImplError httpRetrieverImplError =
+        Assert.assertThrows(
+            HttpRetrieverImplError.class,
+            () -> new HttpRetriever(mockHttpRetrieverCriteria).retrieve());
 
-    Assert.fail("Should have thrown a runtime exception.");
+    assertEquals("Couldn't open that connection!", httpRetrieverImplError.getLocalizedMessage());
   }
 }
