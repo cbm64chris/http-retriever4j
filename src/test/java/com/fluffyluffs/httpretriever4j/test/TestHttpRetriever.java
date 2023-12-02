@@ -43,7 +43,7 @@ public class TestHttpRetriever {
   @Test
   public void test_ContentType() {
     assertEquals(
-        "application/json;charset=UTF-8", HttpRetrieverCriteria.ContentType.JSON.getContentType());
+        "application/json; charset=UTF-8", HttpRetrieverCriteria.ContentType.JSON.getContentType());
     assertEquals(
         "text/html; charset=UTF-8", HttpRetrieverCriteria.ContentType.TEXT.getContentType());
   }

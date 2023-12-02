@@ -279,9 +279,9 @@ public class HttpRetrieverCriteria {
   }
 
   public enum ContentType {
-    JSON("application/json;charset=UTF-8"),
+    JSON("application/json; charset=UTF-8"),
     PNG("image/png"),
-
+    PDF("application/pdf"),
     TEXT("text/html; charset=UTF-8"),
     XML("application/xml; charset=UTF-8");
 

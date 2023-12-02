@@ -1,0 +1,13 @@
+# Maven
+target/
+nb-configuration.xml
+.DS_Store
+pom.xml.bak
+club-mobile-mpeg/src/test/resources/com/lufflogic/club/mobile/mpeg/mp4/tkd.mov
+club-mobile-mpeg/src/test/resources/com/lufflogic/club/mobile/mpeg/mp4/tkd.mp4
+club-mobile-mpeg/src/test/resources/com/lufflogic/club/mobile/mpeg/mp4/video.mp4
+club-mobile-common-test/src/test/resources/*.mp4
+club-mobile-common-test/src/test/resources/*.pdf
+club-mobile-common-test/src/test/resources/*.jpg
+club-mobile-asset-permissions.zip
+*.iml
