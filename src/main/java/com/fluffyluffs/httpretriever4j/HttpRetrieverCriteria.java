@@ -35,8 +35,8 @@ public class HttpRetrieverCriteria {
   private final ContentType acceptContentType;
   private final List<Header> headers;
   private final List<QueryParameter> queryParameters;
-  private final char[] authorization;
   private final String userAgent;
+  private final char[] authorization;
 
   private HttpRetrieverCriteria(HttpRetrieverCriteriaBuilder httpRetrieverCriteriaBuilder) {
     this.authorization = httpRetrieverCriteriaBuilder.authorization;
