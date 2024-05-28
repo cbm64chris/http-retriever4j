@@ -283,7 +283,8 @@ public class HttpRetrieverCriteria {
     PNG("image/png"),
     PDF("application/pdf"),
     TEXT("text/html; charset=UTF-8"),
-    XML("application/xml; charset=UTF-8");
+    XML("application/xml; charset=UTF-8"),
+    MP4("video/mp4");
 
     // TODO add additional content types
 

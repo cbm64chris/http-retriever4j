@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
+import java.time.Duration;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -42,9 +43,19 @@ public class HttpRetrieverImpl {
   private static final String CONTENT_TYPE = "Content-Type";
 
   private final HttpRetrieverCriteria httpRetrieverCriteria;
+  private final long timeout;
+  private final TimeUnit timeUnit;
 
   public HttpRetrieverImpl(HttpRetrieverCriteria httpRetrieverCriteria) {
     this.httpRetrieverCriteria = httpRetrieverCriteria;
+    this.timeout = 5;
+    this.timeUnit = TimeUnit.SECONDS;
+  }
+
+  public HttpRetrieverImpl(HttpRetrieverCriteria httpRetrieverCriteria, long timeout, TimeUnit timeUnit) {
+    this.httpRetrieverCriteria = httpRetrieverCriteria;
+    this.timeout = timeout;
+    this.timeUnit = timeUnit;
   }
 
   public HttpRetrieverResponse retrieveHttpRetrieverResponse() throws HttpRetrieverImplError {
@@ -97,8 +108,8 @@ public class HttpRetrieverImpl {
               .orElse(null));
       connection.setRequestProperty(CACHE_CONTROL, "no-cache");
       connection.setRequestMethod(httpRetrieverCriteria.gethTTPMethod().name());
-      connection.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(5));
-      connection.setReadTimeout((int) TimeUnit.MINUTES.toMillis(1));
+      connection.setConnectTimeout((int) Duration.of(timeout, timeUnit.toChronoUnit()).toMillis());
+      connection.setReadTimeout((int)TimeUnit.MINUTES.toMillis(1));
       connection.setUseCaches(false);
 
       Optional.ofNullable(httpRetrieverCriteria.getBodyContentType())

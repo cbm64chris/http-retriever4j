@@ -19,11 +19,14 @@ package com.fluffyluffs.httpretriever4j;
 import com.fluffyluffs.httpretriever4j.impl.HttpRetrieverImpl;
 import com.fluffyluffs.httpretriever4j.impl.error.HttpRetrieverImplError;
 import java.io.InputStream;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 public class HttpRetriever {
 
   private final HttpRetrieverCriteria httpRetrieverCriteria;
+  private final long timeout;
+  private final TimeUnit timeUnit;
 
   /**
    * HttpRetriever
@@ -32,6 +35,15 @@ public class HttpRetriever {
    */
   public HttpRetriever(HttpRetrieverCriteria httpRetrieverCriteria) {
     this.httpRetrieverCriteria = httpRetrieverCriteria;
+    this.timeout = 5;
+    this.timeUnit = TimeUnit.SECONDS;
+  }
+
+  public HttpRetriever(
+      HttpRetrieverCriteria httpRetrieverCriteria, long timeout, TimeUnit timeUnit) {
+    this.httpRetrieverCriteria = httpRetrieverCriteria;
+    this.timeout = timeout;
+    this.timeUnit = timeUnit;
   }
 
   /**
@@ -41,7 +53,9 @@ public class HttpRetriever {
    */
   public InputStream retrieve() throws HttpRetrieverImplError {
 
-    return new HttpRetrieverImpl(httpRetrieverCriteria).retrieveHttpRetrieverResponse().getIn();
+    return new HttpRetrieverImpl(httpRetrieverCriteria, timeout, timeUnit)
+        .retrieveHttpRetrieverResponse()
+        .getIn();
   }
 
   /**
@@ -54,12 +68,14 @@ public class HttpRetriever {
   public <T> T retrieve(Function<InputStream, T> responseFunction) throws HttpRetrieverImplError {
 
     return responseFunction.apply(
-        new HttpRetrieverImpl(httpRetrieverCriteria).retrieveHttpRetrieverResponse().getIn());
+        new HttpRetrieverImpl(httpRetrieverCriteria, timeout, timeUnit)
+            .retrieveHttpRetrieverResponse()
+            .getIn());
   }
 
   public int status() throws HttpRetrieverImplError {
 
-    return new HttpRetrieverImpl(httpRetrieverCriteria)
+    return new HttpRetrieverImpl(httpRetrieverCriteria, timeout, timeUnit)
         .retrieveHttpRetrieverResponse()
         .getResponseCode();
   }
