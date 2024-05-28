@@ -77,13 +77,13 @@
                     <pushChanges>false</pushChanges>
                     <tagNameFormat>@{project.version}</tagNameFormat>
                 </configuration>
-                <dependencies>
+<!--                <dependencies>
                     <dependency>
                         <groupId>org.apache.maven.scm</groupId>
                         <artifactId>maven-scm-provider-gitexe</artifactId>
-                        <version>1.13.0</version>
+                        <version>1.12.2</version>
                     </dependency>
-                </dependencies>
+                </dependencies>-->
             </plugin>
             <plugin>
                 <groupId>org.jacoco</groupId>
