@@ -18,12 +18,13 @@ package com.fluffyluffs.httpretriever4j;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /** HTTP Retriever Criteria */
 public class HttpRetrieverCriteria {
@@ -45,22 +46,30 @@ public class HttpRetrieverCriteria {
     this.bodyContentType = httpRetrieverCriteriaBuilder.bodyContentType;
     this.acceptContentType = httpRetrieverCriteriaBuilder.acceptContentType;
     this.userAgent = httpRetrieverCriteriaBuilder.userAgent;
-    this.headers = httpRetrieverCriteriaBuilder.headers;
-    this.queryParameters = httpRetrieverCriteriaBuilder.queryParameters;
+    this.headers = List.copyOf(httpRetrieverCriteriaBuilder.headers);
+    this.queryParameters = List.copyOf(httpRetrieverCriteriaBuilder.queryParameters);
 
-    String urlWithParams =
-        httpRetrieverCriteriaBuilder.url.concat(
-            queryParameters.stream()
-                .map(queryParameter -> queryParameter.getField() + "=" + queryParameter.getValue())
-                .collect(
-                    Collectors.collectingAndThen(
-                        Collectors.joining("&"),
-                        params ->
-                            ((params.isBlank() || httpRetrieverCriteriaBuilder.url.contains("?"))
-                                    ? ""
-                                    : "?")
-                                .concat(params))));
-    this.url = urlWithParams;
+    String parameters =
+        queryParameters.stream()
+            .map(queryParameter -> urlEncoding(queryParameter.getField()) + "=" + urlEncoding(queryParameter.getValue()))
+            .collect(java.util.stream.Collectors.joining("&"));
+    this.url =
+        httpRetrieverCriteriaBuilder.url
+            + queryParameterSeparator(httpRetrieverCriteriaBuilder.url, parameters);
+  }
+
+  private String urlEncoding(String arg) {
+    return URLEncoder.encode(arg, StandardCharsets.UTF_8);
+  }
+
+  private String queryParameterSeparator(String baseUrl, String parameters) {
+    if (parameters.isBlank()) {
+      return "";
+    }
+    if (!baseUrl.contains("?")) {
+      return "?" + parameters;
+    }
+    return (baseUrl.endsWith("?") || baseUrl.endsWith("&") ? "" : "&") + parameters;
   }
 
   /**
@@ -280,11 +289,22 @@ public class HttpRetrieverCriteria {
 
   public enum ContentType {
     JSON("application/json; charset=UTF-8"),
+    CSV("text/csv; charset=UTF-8"),
     PNG("image/png"),
+    JPEG("image/jpeg"),
+    GIF("image/gif"),
+    SVG("image/svg+xml"),
     PDF("application/pdf"),
-    TEXT("text/html; charset=UTF-8"),
+    TEXT("text/plain; charset=UTF-8"),
+    HTML("text/html; charset=UTF-8"),
+    CSS("text/css; charset=UTF-8"),
+    JAVASCRIPT("text/javascript; charset=UTF-8"),
     XML("application/xml; charset=UTF-8"),
-    MP4("video/mp4");
+    MP4("video/mp4"),
+    OCTET_STREAM("application/octet-stream"),
+    ZIP("application/zip"),
+    MULTIPART_FORM("multipart/form-data"),
+    FORM("application/x-www-form-urlencoded");
 
     // TODO add additional content types
 
@@ -306,6 +326,9 @@ public class HttpRetrieverCriteria {
 
   public enum HTTPMethod {
     GET,
+    HEAD,
+    OPTIONS,
+    PATCH,
     PUT,
     DELETE,
     TRACE,

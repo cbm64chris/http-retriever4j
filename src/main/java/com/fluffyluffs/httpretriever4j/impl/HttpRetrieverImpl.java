@@ -23,9 +23,12 @@ import com.fluffyluffs.httpretriever4j.model.HttpRetrieverResponse;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -52,30 +55,34 @@ public class HttpRetrieverImpl {
     this.timeUnit = TimeUnit.SECONDS;
   }
 
-  public HttpRetrieverImpl(HttpRetrieverCriteria httpRetrieverCriteria, long timeout, TimeUnit timeUnit) {
+  public HttpRetrieverImpl(
+      HttpRetrieverCriteria httpRetrieverCriteria, long timeout, TimeUnit timeUnit) {
     this.httpRetrieverCriteria = httpRetrieverCriteria;
     this.timeout = timeout;
     this.timeUnit = timeUnit;
   }
 
   public HttpRetrieverResponse retrieveHttpRetrieverResponse() throws HttpRetrieverImplError {
-    boolean success;
     HttpURLConnection connection = getHttpURLConnection();
 
-    try (InputStream in = connection.getInputStream()) {
+    try {
+      int responseCode = connection.getResponseCode();
       Response response =
-          Response.of(connection.getResponseCode()).orElse(Response.HTTP_INTERNAL_ERROR);
-      success = response.hasStatus();
+          Response.of(responseCode).orElse(Response.HTTP_INTERNAL_ERROR);
+      boolean success = response.hasStatus();
+      InputStream responseStream = success ? connection.getInputStream() : connection.getErrorStream();
 
-      if (success) {
-        log(response, Level.INFO);
+      log(response, success ? Level.INFO : Level.WARNING);
 
+      if (responseStream == null) {
         return new HttpRetrieverResponse(
-            response.getReponseCode(), new ByteArrayInputStream(in.readAllBytes()));
+            responseCode, InputStream.nullInputStream(), responseHeaders(connection));
       }
 
-      log(response, Level.WARNING);
-      return new HttpRetrieverResponse(response.getReponseCode(), InputStream.nullInputStream());
+      try (InputStream in = responseStream) {
+        return new HttpRetrieverResponse(
+            responseCode, new ByteArrayInputStream(in.readAllBytes()), responseHeaders(connection));
+      }
 
     } catch (IOException ex) {
       throw new HttpRetrieverImplError(ex.getLocalizedMessage(), ex);
@@ -95,21 +102,16 @@ public class HttpRetrieverImpl {
 
       HttpURLConnection connection =
           (HttpURLConnection) httpRetrieverCriteria.getUrl().openConnection();
-      connection.addRequestProperty(
-          AUTH,
-          Optional.ofNullable(httpRetrieverCriteria.getAuthorization())
-              .map(auth -> String.valueOf(auth))
-              .orElse(null));
+      Optional.ofNullable(httpRetrieverCriteria.getAuthorization())
+          .ifPresent(auth -> connection.setRequestProperty(AUTH, String.valueOf(auth)));
       connection.setRequestProperty(USER_AGENT, httpRetrieverCriteria.getUserAgent());
-      connection.setRequestProperty(
-          ACCEPT,
-          Optional.ofNullable(httpRetrieverCriteria.getAcceptContentType())
-              .map(ContentType::getContentType)
-              .orElse(null));
+      Optional.ofNullable(httpRetrieverCriteria.getAcceptContentType())
+          .map(ContentType::getContentType)
+          .ifPresent(contentType -> connection.setRequestProperty(ACCEPT, contentType));
       connection.setRequestProperty(CACHE_CONTROL, "no-cache");
       connection.setRequestMethod(httpRetrieverCriteria.gethTTPMethod().name());
       connection.setConnectTimeout((int) Duration.of(timeout, timeUnit.toChronoUnit()).toMillis());
-      connection.setReadTimeout((int)TimeUnit.MINUTES.toMillis(1));
+      connection.setReadTimeout(timeoutInMilliseconds());
       connection.setUseCaches(false);
 
       Optional.ofNullable(httpRetrieverCriteria.getBodyContentType())
@@ -132,12 +134,10 @@ public class HttpRetrieverImpl {
                 connection.setRequestProperty(headerType, headerString);
               });
 
-      Optional.ofNullable(httpRetrieverCriteria.getBody())
-          .ifPresent(
-              body ->
-                  writeBody(
-                      connection,
-                      new StringBuilder(body).append(System.lineSeparator()).toString()));
+      String body = httpRetrieverCriteria.getBody();
+      if (body != null) {
+        writeBody(connection, body);
+      }
 
       connection.connect();
 
@@ -147,16 +147,28 @@ public class HttpRetrieverImpl {
     }
   }
 
-  private void writeBody(HttpURLConnection secureConnection, String body) {
+  private void writeBody(HttpURLConnection secureConnection, String body) throws IOException {
+    byte[] bodyBytes = body.getBytes(StandardCharsets.UTF_8);
     secureConnection.setDoOutput(true);
-    secureConnection.setRequestProperty(
-        "Content-Length", "" + Integer.toString(body.getBytes().length));
-    try (OutputStreamWriter outputStreamWriter =
-        new OutputStreamWriter(secureConnection.getOutputStream())) {
-      outputStreamWriter.write(body);
-      outputStreamWriter.flush();
-    } catch (IOException ex) {
-      LOGGER.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+    secureConnection.setFixedLengthStreamingMode(bodyBytes.length);
+    try (OutputStream outputStream = secureConnection.getOutputStream()) {
+      outputStream.write(bodyBytes);
     }
+  }
+
+  private int timeoutInMilliseconds() {
+    return Math.toIntExact(Duration.of(timeout, timeUnit.toChronoUnit()).toMillis());
+  }
+
+  private Map<String, List<String>> responseHeaders(HttpURLConnection connection) {
+    Map<String, List<String>> headers = connection.getHeaderFields();
+    if (headers == null) {
+      return Map.of();
+    }
+    return headers.entrySet().stream()
+        .filter(entry -> entry.getKey() != null && entry.getValue() != null)
+        .collect(
+            java.util.stream.Collectors.toUnmodifiableMap(
+                Map.Entry::getKey, entry -> List.copyOf(entry.getValue())));
   }
 }

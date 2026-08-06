@@ -18,6 +18,7 @@ package com.fluffyluffs.httpretriever4j;
 
 import com.fluffyluffs.httpretriever4j.impl.HttpRetrieverImpl;
 import com.fluffyluffs.httpretriever4j.impl.error.HttpRetrieverImplError;
+import com.fluffyluffs.httpretriever4j.model.HttpRetrieverResponse;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -52,10 +53,7 @@ public class HttpRetriever {
    * @return InputStream
    */
   public InputStream retrieve() throws HttpRetrieverImplError {
-
-    return new HttpRetrieverImpl(httpRetrieverCriteria, timeout, timeUnit)
-        .retrieveHttpRetrieverResponse()
-        .getIn();
+    return execute().getIn();
   }
 
   /**
@@ -67,16 +65,15 @@ public class HttpRetriever {
    */
   public <T> T retrieve(Function<InputStream, T> responseFunction) throws HttpRetrieverImplError {
 
-    return responseFunction.apply(
-        new HttpRetrieverImpl(httpRetrieverCriteria, timeout, timeUnit)
-            .retrieveHttpRetrieverResponse()
-            .getIn());
+    return responseFunction.apply(execute().getIn());
   }
 
   public int status() throws HttpRetrieverImplError {
+    return execute().getResponseCode();
+  }
 
+  public HttpRetrieverResponse execute() throws HttpRetrieverImplError {
     return new HttpRetrieverImpl(httpRetrieverCriteria, timeout, timeUnit)
-        .retrieveHttpRetrieverResponse()
-        .getResponseCode();
+        .retrieveHttpRetrieverResponse();
   }
 }

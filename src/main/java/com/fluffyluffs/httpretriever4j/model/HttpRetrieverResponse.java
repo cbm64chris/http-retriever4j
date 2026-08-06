@@ -16,15 +16,24 @@
 package com.fluffyluffs.httpretriever4j.model;
 
 import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
 
 public class HttpRetrieverResponse {
 
   private final int responseCode;
   private final InputStream in;
+  private final Map<String, List<String>> headers;
 
   public HttpRetrieverResponse(int responseCode, InputStream in) {
+    this(responseCode, in, Map.of());
+  }
+
+  public HttpRetrieverResponse(
+      int responseCode, InputStream in, Map<String, List<String>> headers) {
     this.responseCode = responseCode;
     this.in = in;
+    this.headers = Map.copyOf(headers);
   }
 
   public int getResponseCode() {
@@ -33,5 +42,9 @@ public class HttpRetrieverResponse {
 
   public InputStream getIn() {
     return in;
+  }
+
+  public Map<String, List<String>> getHeaders() {
+    return headers;
   }
 }
